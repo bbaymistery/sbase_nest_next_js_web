@@ -5,3 +5,5 @@ dist/
 .env.local
 *.env
 src.txt
+.vscode/
+*.tsbuildinfo
