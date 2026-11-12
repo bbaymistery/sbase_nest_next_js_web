@@ -7,3 +7,5 @@ dist/
 src.txt
 .vscode/
 *.tsbuildinfo
+apps/api/src/db/schema/index.html
+apps/api/src/db/drizleExp.ts
