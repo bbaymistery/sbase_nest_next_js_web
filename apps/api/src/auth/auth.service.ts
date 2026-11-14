@@ -212,7 +212,6 @@ export class AuthService {
       scope: 'openid email profile',
       access_type: 'offline',
     });
-
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
   /**
@@ -289,37 +288,52 @@ export class AuthService {
       },
     );
 
-    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const tokenData = (await tokenRes.json()) as { access_token?: string; error?: string; error_description?: string; };
+
+    if (!tokenData.access_token) {
+      throw new UnauthorizedException(tokenData.error_description || 'Failed to obtain access token from GitHub');
+    }
+
+    const githubHeaders = {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'supavolt-api',
+    };
+
     // 2. Fetch user's basic profile details from GitHub API
     const profileRes = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-        Accept: 'application/vnd.github+json',
-      },
+      headers: githubHeaders,
     });
 
-    const profile = (await profileRes.json()) as { email: string | null; name: string | null; login: string; avatar_url: string | null; };
+    const profile = (await profileRes.json()) as {
+      email: string | null;
+      name: string | null;
+      login: string;
+      avatar_url: string | null;
+    };
 
     // 3. GitHub quirk: If user's email is set to private, query the /user/emails endpoint
     let email = profile.email;
     if (!email) {
       const emailRes = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/vnd.github+json',
-        },
+        headers: githubHeaders,
       });
-      const emails = (await emailRes.json()) as {
-        email: string;
-        primary: boolean;
-        verified: boolean;
-      }[];
-      // Pick the primary verified email address
-      email = emails.find((e) => e.primary && e.verified)?.email ?? null;
+      const emails = (await emailRes.json()) as
+        | { email: string; primary: boolean; verified: boolean; }[]
+        | { message: string; };
+
+      if (Array.isArray(emails)) {
+        email = emails.find((e) => e.primary && e.verified)?.email ?? emails[0]?.email ?? null;
+      }
     }
+
+    if (!email) {
+      throw new UnauthorizedException('No verified email found for this GitHub account');
+    }
+
     // 4. Upsert user in database (fallback to username if display name is null) and return tokens
     return this.handleOAuthUser({
-      email: email!,
+      email,
       name: profile.name ?? profile.login,
       avatarUrl: profile.avatar_url ?? null,
     });

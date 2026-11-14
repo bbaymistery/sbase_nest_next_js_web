@@ -7,6 +7,7 @@ import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
+import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 
 @Controller('auth')
 export class AuthController {
@@ -55,7 +56,7 @@ export class AuthController {
     return { message: 'Tokens refreshed' };
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@CurrentUser() user: JwtPayload) {
     return user;
@@ -71,9 +72,7 @@ export class AuthController {
   async googleCallback(@Query('code') code: string, @Res() res: Response) {
     const tokens = await this.authService.handleGoogleCallback(code);
     this.authService.setTokenCookies(res, tokens);
-    return res.redirect(
-      `${this.configService.get<string>('WEB_URL')}/dashboard`,
-    );
+    return res.redirect(`${this.configService.get<string>('WEB_URL')}/dashboard`,);
   }
 
   @Get('github')
@@ -86,9 +85,7 @@ export class AuthController {
   async githubCallback(@Query('code') code: string, @Res() res: Response) {
     const tokens = await this.authService.handleGithubCallback(code);
     this.authService.setTokenCookies(res, tokens);
-    return res.redirect(
-      `${this.configService.get<string>('WEB_URL')}/dashboard`,
-    );
+    return res.redirect(`${this.configService.get<string>('WEB_URL')}/dashboard`,);
   }
 
 

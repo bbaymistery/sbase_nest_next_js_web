@@ -3,5 +3,4 @@ import type { OrgRole } from '@sbase/types';
 
 export const ORG_ROLE_KEY = 'orgRole';
 
-export const RequireOrgRole = (role: OrgRole) =>
-  SetMetadata(ORG_ROLE_KEY, role);
+export const RequireOrgRole = (role: OrgRole) => SetMetadata(ORG_ROLE_KEY, role);
