@@ -68,3 +68,188 @@ export interface OrganizationWithMeta extends Organization {
   projectCount: number;
   role: OrgRole;
 }
+
+export interface OrgMemberWithUser {
+  id: string;
+  role: OrgRole;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface InviteMemberInput {
+  email: string;
+}
+
+export interface UpdateRoleInput {
+  role: OrgRole;
+}
+
+export interface CreateProjectInput {
+  name: string;
+}
+
+export interface ProjectWithOrg extends Project {
+  org: Pick<Organization, 'id' | 'name' | 'slug'>;
+}
+
+export type ColumnType =
+  | 'text'
+  | 'integer'
+  | 'bigint'
+  | 'boolean'
+  | 'timestamp'
+  | 'uuid'
+  | 'jsonb'
+  | 'numeric';
+
+export interface TableColumn {
+  name: string;
+  type: ColumnType;
+  isNullable: boolean;
+  isPrimaryKey: boolean;
+  defaultValue: string | null;
+  foreignKey: {
+    table: string;
+    column: string;
+  } | null;
+}
+
+export interface TableInfo {
+  name: string;
+  columns: TableColumn[];
+}
+
+export interface CreateColumnInput {
+  name: string;
+  type: ColumnType;
+  isNullable: boolean;
+  isPrimaryKey: boolean;
+  defaultValue?: string;
+  foreignKeyTable?: string;
+  foreignKeyColumn?: string;
+}
+
+export interface CreateTableInput {
+  name: string;
+  columns: CreateColumnInput[];
+}
+
+// API DOCS
+export interface ProjectApiEndpoint {
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  path: string;
+  description: string;
+  example: string;
+}
+
+export interface ProjectApiDocs {
+  projectUrl: string;
+  anonKey: string;
+  serviceRoleKey: string;
+  tables: {
+    name: string;
+    endpoints: ProjectApiEndpoint[];
+  }[];
+}
+
+export interface ProjectBySlugResponse {
+  projects: Project;
+  organizations: Organization;
+  org_members: OrgMember;
+}
+
+// SQL EDITOR
+export interface QueryResult {
+  rows: Record<string, unknown>[];
+  columns: string[];
+  rowCount: number;
+  executionTimeMs: number;
+  command?: string;
+}
+
+export interface QueryHistoryItem {
+  id: string;
+  projectId: string;
+  sql: string;
+  executionTimeMs: number;
+  rowCount: number;
+  createdAt: string;
+}
+
+export type RealtimeEventType = 'INSERT' | 'UPDATE' | 'DELETE';
+
+export interface RealtimeEvent {
+  type: RealtimeEventType;
+  table: string;
+  record: Record<string, unknown>;
+  oldRecord?: Record<string, unknown>; // only on UPDATE and DELETE
+  projectId: string;
+  timestamp: string;
+}
+
+// Storage
+export type BucketAccess = 'public' | 'private';
+
+export interface StorageBucket {
+  id: string;
+  projectId: string;
+  name: string;
+  access: BucketAccess;
+  createdAt: string;
+}
+
+export interface StorageObject {
+  id: string;
+  bucketId: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  utKey: string; // UploadThing file key — used to delete or get signed URL
+  url: string; // public URL (public buckets) or empty string (private)
+  createdAt: string;
+}
+
+export interface CreateBucketInput {
+  name: string;
+  access: BucketAccess;
+}
+// AUTH
+export interface ProjectAuthUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  provider: 'email' | 'google' | 'github';
+  createdAt: string;
+}
+
+export interface SignUpInput {
+  email: string;
+  password: string;
+}
+
+export interface SignInInput {
+  email: string;
+  password: string;
+}
+
+export interface MagicLinkInput {
+  email: string;
+}
+
+export interface ProjectOAuthSettings {
+  siteUrl: string | null;
+  googleClientId: string | null;
+  googleClientSecret: string | null;
+  githubClientId: string | null;
+  githubClientSecret: string | null;
+}
+
+export interface ProjectAuthResponse {
+  user: { id: string; email: string };
+  accessToken: string;
+}
