@@ -1,0 +1,29 @@
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { retrieveTokenFromCookie } from '@/server-utils/utils';
+import { retrieveMyOrganizationsFromApi } from '@/features/organization/organization-helpers.server';
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+async function getCurrentUser() {
+  const token = await retrieveTokenFromCookie();
+
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString(),);
+
+  return { email: payload.email as string, name: null };
+}
+
+export default async function DashboardLayout({ children, }: { children: React.ReactNode; }) {
+  const [orgs, user] = await Promise.all([
+    retrieveMyOrganizationsFromApi(),
+    getCurrentUser(),
+  ]);
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <SidebarProvider>
+        <AppSidebar orgs={orgs} user={user} />
+        <SidebarInset className="bg-background">{children}</SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
+}

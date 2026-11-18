@@ -2,7 +2,11 @@ packages:
   - "apps/*"
   - "packages/*"
 
+allowBuilds:
+  ejs: true
+
 onlyBuiltDependencies:
   - bcrypt
+  - ejs
   - esbuild
   - unrs-resolver
