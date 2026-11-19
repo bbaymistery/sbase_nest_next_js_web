@@ -99,7 +99,7 @@ export class InviteService {
     const inviteUrl = `${this.configService.get<string>('API_URL')}/auth/invite/accept?token=${token}`;
 
     // 5. Resend API aracılığıyla davet e-postasını gönderiyoruz
-    await this.resend.emails.send({
+    const { data, error } = await this.resend.emails.send({
       from: 'onboarding@resend.dev',
       to: email,
       subject: `You've been invited to join ${org.name} on Supavolt`,
@@ -116,7 +116,12 @@ export class InviteService {
         </div>
       `,
     });
-
+    if (error) {
+      console.error('❌ Resend göndərmə xətası:', error);
+      throw new BadRequestException(
+        `Email göndərilə bilmədi: ${error.message}`,
+      );
+    }
     return { message: 'Invite sent' };
   }
 

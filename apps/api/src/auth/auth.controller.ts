@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, Post, Query, Redirect, Req, Res, UseGuards, } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  Redirect,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { COOKIE_KEYS } from '@sbase/constants';
@@ -8,13 +19,15 @@ import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { InviteService } from '../members/invite.service.js';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private configService: ConfigService,
-  ) { }
+    private inviteService: InviteService,
+  ) {}
 
   @Post('register')
   async register(
@@ -72,7 +85,9 @@ export class AuthController {
   async googleCallback(@Query('code') code: string, @Res() res: Response) {
     const tokens = await this.authService.handleGoogleCallback(code);
     this.authService.setTokenCookies(res, tokens);
-    return res.redirect(`${this.configService.get<string>('WEB_URL')}/dashboard`,);
+    return res.redirect(
+      `${this.configService.get<string>('WEB_URL')}/dashboard`,
+    );
   }
 
   @Get('github')
@@ -85,8 +100,13 @@ export class AuthController {
   async githubCallback(@Query('code') code: string, @Res() res: Response) {
     const tokens = await this.authService.handleGithubCallback(code);
     this.authService.setTokenCookies(res, tokens);
-    return res.redirect(`${this.configService.get<string>('WEB_URL')}/dashboard`,);
+    return res.redirect(
+      `${this.configService.get<string>('WEB_URL')}/dashboard`,
+    );
   }
-
-
+  @Get('invite/accept')
+  async acceptInvite(@Query('token') token: string, @Res() res: Response) {
+    await this.inviteService.acceptInvite(token);
+    return res.redirect(`${this.configService.get('WEB_URL')}/dashboard`);
+  }
 }
